@@ -1,8 +1,11 @@
 import express from "express";
+import mongoose from "mongoose";
 import logger from "morgan";
 import createHttpError from "http-errors";
 import cookieParser from "cookie-parser"
 import dotenv from "dotenv"
+
+import v1Router from './urls.js'
 
 dotenv.config()
 
@@ -14,20 +17,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createHttpError(404));
-});
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-  debug(err.message);
-  // render the error page
-  res.status(err.status || 500).json({ message: "Internal Server Error" });
-});
+mongoose.connect(process.env.MONGOURL)
+mongoose.connection.on('error', (error) => {
+  console.log('Database connection error: ', error)
+})
+
+app.use('/v1', v1Router)
 
 app.listen( PORT, () => {
   console.log(`Server is running on port: ${PORT}`)

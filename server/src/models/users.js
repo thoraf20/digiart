@@ -1,53 +1,22 @@
-import bcrypt from "bcryptjs";
-import { sequelize, DataTypes } from "../../dbConfig.js";
+import mongoose from 'mongoose'
 
-export const UserTable = (sequelize, DataTypes) => {
-  const User = sequelize.define(
-    "Users",
-    {
-      email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-      },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-      ethereum_address: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-      id: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-        primaryKey: true,
-        autoIncrement: true
-      },
-      user_type: {
-        type: DataTypes.ENUM("ESCROW", "CONSUMER"),
-        allowNull: false
-      }
-    },
-    {
-      tableName: "users",
-      timestamps: false,
-      hooks: {
-        async beforeCreate(user) {
-          try {
-            const salt = await bcrypt.genSalt(
-              parseInt(process.env.SALT_ROUNDS)
-            );
-
-            const hashedPassword = await bcrypt.hash(user.password, salt);
-
-            user.password = hashedPassword;
-          } catch (err) {
-            throw new Error(`Error in beforeCreate hook: ${err}`);
-          }
-        }
-      }
-    }
-  );
-  return User;
+export const userType = {
+  ESCROW : 'escrow',
+  BUYER : 'buyer',
+  ARTIST : 'artist',
 }
+
+const schema = new mongoose.Schema(
+  {
+   email: { type: String },
+   password: { type: String },
+   ethereum_address: { type: String },
+   user_type: { type: String, enum: userType },
+   generated_id: { type: String },
+  },
+  { collection: 'users', timestamps: true }
+)
+
+const UserModel = mongoose.model('Users', schema)
+
+export default UserModel
