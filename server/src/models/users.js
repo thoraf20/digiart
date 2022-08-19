@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { hashPassword } from '../../utils/hash.js';
 
 export const userType = {
   ESCROW : 'escrow',
@@ -17,6 +18,14 @@ const schema = new mongoose.Schema(
   { collection: 'users', timestamps: true }
 )
 
+schema.pre('save', function(next) {
+
+  if ( this.password && this.isModified('password') ) {
+    this.password = hashPassword(this.password);
+  }
+
+ next();
+});
 const UserModel = mongoose.model('Users', schema)
 
 export default UserModel

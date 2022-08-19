@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import Joi from "joi";
 import createHttpError from "http-errors";
 import { randomBytes } from 'crypto';
+import { hashPassword } from '../../utils/hash.js';
 
 import UserModel from "../models/users.js";
 import { generateJwt } from "../../utils/jwt.js";
@@ -18,7 +19,7 @@ export const signupHandler = async (req, res) => {
   const { value, error } = requestSchema.validate(req.body)
 
   if (error) {
-    return res.status(createHttpError(400)).json({ error: error.message })
+    return res.status(400).json({ error: error.message })
   }
 
   const existingUser = await UserModel.findOne({
@@ -26,7 +27,7 @@ export const signupHandler = async (req, res) => {
   })
 
   if (existingUser) {
-    return res.status(createHttpError(409)).json({ message: "User Account Already Exist" })
+    return res.status(409).json({ message: "User Account Already Exist" })
   }
 
   try {
@@ -34,9 +35,11 @@ export const signupHandler = async (req, res) => {
     const generated_id = randomBytes(32).toString('hex');
     const address = generateWallet(generated_id)
 
+    const passwordHash = await hashPassword(value.password)
+
     const newUser = await UserModel.create({
       email: value.email,
-      password: value.password,
+      password: passwordHash,
       user_type: value.user_type,
       ethereum_address: address,
       generated_id
@@ -65,7 +68,7 @@ export const loginHandler = async (req, res) => {
   const { value, error } = requestSchema.validate(req.body)
 
   if (error) {
-    return res.status(createHttpError(400)).json({ error: error.message })
+    return res.status(400).json({ error: error.message })
   }
 
   const existingUser = await UserModel.findOne({
@@ -73,14 +76,14 @@ export const loginHandler = async (req, res) => {
   })
 
   if (!existingUser) {
-    return res.status(createHttpError(409)).json({ 
+    return res.status(400).json({ 
       message: "User not registered! Please signup.",
       user: {}
     })
   }
 
   try {
-    const result = await bcrypt.compare(password, existingUser.password);
+    const result = await bcrypt.compare(value.password, existingUser.password);
 
     if (!result) {
       return res.status(401).json({
