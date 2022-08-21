@@ -1,18 +1,13 @@
 import mongoose from 'mongoose'
 import { hashPassword } from '../../utils/hash.js';
 
-export const userType = {
-  ESCROW : 'escrow',
-  BUYER : 'buyer',
-  ARTIST : 'artist',
-}
 
 const schema = new mongoose.Schema(
   {
    email: { type: String },
    password: { type: String },
    ethereum_address: { type: String },
-   user_type: { type: String, enum: userType },
+   user_type: { type: String, enum: ['escrow', 'buyer', 'artist'] },
    generated_id: { type: String },
   },
   { collection: 'users', timestamps: true }
